@@ -1,0 +1,21 @@
+[package]
+name = "engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+name = "engine"
+crate-type = ["lib"]
+
+[[bin]]
+name = "dm-cli"
+path = "src/main.rs"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+url = "2"
+# Raw WinHTTP via a small hand-written FFI block (see winhttp.rs). We link the
+# OS-provided winhttp.lib directly — no bundled networking, exactly like IDM.

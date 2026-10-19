@@ -1,0 +1,73 @@
+# Release — triggers when dev is promoted (pushed/merged) to main.
+# Builds everything, compiles setup.exe with the version from the VERSION file,
+# then tags vX.Y.Z and publishes a GitHub Release with setup.exe attached.
+name: release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write # needed to create tags + releases
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so tagging works
+
+      - name: Read version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = (Get-Content VERSION -Raw).Trim()
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "VERSION file must be semver, got: '$v'" }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          $tag = "v$v"
+          # Enforce "version it before promoting to main": the tag must be new.
+          if (git rev-parse "$tag" 2>$null) { throw "Tag $tag already exists — bump VERSION before pushing to main." }
+          Write-Host "releasing $tag"
+
+      - name: Install Rust (MSVC toolchain)
+        run: |
+          if (-not (Get-Command rustc -ErrorAction SilentlyContinue)) {
+            Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
+            .\rustup-init.exe -y --default-toolchain stable --default-host x86_64-pc-windows-msvc
+          }
+
+      - name: MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build (release)
+        run: cargo build --release
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            winget install --id JRSoftware.InnoSetup --accept-package-agreements --accept-source-agreements --silent
+          }
+
+      - name: Compile setup.exe
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          & $iscc "/DAppVersion=${{ steps.ver.outputs.version }}" setup.iss
+          if (-not (Test-Path "dist\setup.exe")) { throw "dist\setup.exe was not produced" }
+
+      - name: Create tag + GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $v = "${{ steps.ver.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "v$v"
+          git push origin "v$v"
+          gh release create "v$v" "dist\setup.exe" `
+            --title "Grabber v$v" `
+            --notes "Automated release from main. Installer: setup.exe (Windows x64, installs the service, UI, and browser integration)."

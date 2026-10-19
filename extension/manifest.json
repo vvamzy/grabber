@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Download Manager",
+  "version": "0.1.0",
+  "description": "Hands browser downloads and video streams to the local Download Manager service (IDM-style).",
+  "key": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEYOxh3zGMPeoEPhX4MRaOXaTQSOkr9J9BP2FOHfTnxE8ahTdKDwrNGA3xTLyfufzEtStj6DHyDMjOAFo56BU0dg==",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "downloads",
+    "nativeMessaging",
+    "notifications",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_title": "Download Manager"
+  }
+}

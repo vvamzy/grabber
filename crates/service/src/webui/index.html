@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Download Manager</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Download Manager</h1>
+        <p class="sub">Multi-segment &middot; WinHTTP &middot; runs as a Windows service</p>
+      </div>
+      <span class="badge" id="svcBadge">service</span>
+    </header>
+
+    <section class="add">
+      <form id="addForm">
+        <input type="url" id="url" placeholder="https://example.com/large-file.zip" required />
+        <input type="number" id="segments" min="1" max="64" value="8" title="segments" />
+        <button type="submit">Download</button>
+      </form>
+    </section>
+
+    <section class="stats">
+      <h2>Daily stats</h2>
+      <div class="stat-cards">
+        <div class="card"><div class="card-val" id="todayCount">&ndash;</div><div class="card-label">Downloads today</div></div>
+        <div class="card"><div class="card-val" id="todayBytes">&ndash;</div><div class="card-label">Total size today</div></div>
+        <div class="card"><div class="card-val" id="todayTop">&ndash;</div><div class="card-label">Top speed today</div></div>
+      </div>
+
+      <h3>By day</h3>
+      <table class="daily" id="dailyTable">
+        <thead>
+          <tr><th>Day</th><th>Downloads</th><th>Total size</th><th>Top speed</th><th>Fastest file</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="downloads">
+      <h2>Downloads</h2>
+      <table class="dl" id="dlTable">
+        <thead>
+          <tr><th>File</th><th>Size</th><th>Progress</th><th>Speed</th><th>Peak</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="empty" id="emptyMsg">No downloads yet. Add a URL above, or download something in your browser.</p>
+    </section>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

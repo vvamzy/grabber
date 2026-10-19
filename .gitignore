@@ -1,0 +1,29 @@
+# --- Build artifacts ---
+/target/
+/dist/
+
+# --- Runtime data (user's downloads + stats) ---
+/data/
+/downloads/
+
+# --- Scratch / diagnostic scripts (not part of the product) ---
+verify.ps1
+kids.ps1
+treepix.ps1
+blackscan.ps1
+sample.ps1
+
+# --- Screenshots (never upload) ---
+screenshot.png
+tree-icons-zoom.png
+ui-screenshot.png
+ui-mock.png
+
+# --- Extension packing key (manifest.json already pins the extension ID) ---
+extension/.key.json
+
+# --- Editor / OS noise ---
+.vs/
+*.rs.bk
+Thumbs.db
+desktop.ini

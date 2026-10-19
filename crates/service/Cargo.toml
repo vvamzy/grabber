@@ -1,0 +1,15 @@
+[package]
+name = "service"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "dm-service"
+path = "src/main.rs"
+
+[dependencies]
+engine = { path = "../engine" }
+serde.workspace = true
+serde_json.workspace = true
+windows-service = "0.7"
