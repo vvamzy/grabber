@@ -1,0 +1,70 @@
+# CodeRabbit configuration
+# Reference: https://docs.coderabbit.ai/reference/configuration
+# The app must be installed once per account: https://github.com/apps/coderabbitai
+
+language: en-US
+tone_instructions: "Be direct and technical. Solo Rust/Win32 developer. No praise, no restating the diff — lead with findings, ordered by severity."
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  collapse_walkthrough: true
+  estimate_code_review_effort: false
+  path_filters:
+    # Never review build output or local runtime state (also keeps clones small).
+    - "!target/**"
+    - "!dist/**"
+    - "!data/**"
+    - "!downloads/**"
+    - "!Cargo.lock"
+    - "!**/*.png"
+    - "!ui-mock.html"
+  path_instructions:
+    - path: "crates/**/*.rs"
+      instructions: |
+        Native Win32 app using the `windows` crate v0.58 (no framework, no unsafe glue library).
+        Check for:
+        - FFI lifetime bugs: callbacks/context pointers outliving the window or thread that owns them,
+          MessageBox-style re-entrancy, sending messages across threads without SendMessage/WakeUp.
+        - Handle/GDI leaks: every CreateDIBSection/CreateCompatibleDC/LoadIcon needs a matching
+          DeleteObject/ReleaseDC/DestroyIcon; ImageList resources too.
+        - Work blocking inside window procs: no network or file I/O in WM_* handlers on the UI thread.
+        - WinHTTP handle pairing (WinHttpCloseHandle on every open handle, including error paths)
+          and correct Range-header math for multi-segment downloads — off-by-one here silently
+          corrupts files.
+        - Integer overflow on u64 offsets when casting to u32/i32 for Win32 structs.
+    - path: ".github/workflows/*.yml"
+      instructions: |
+        CI is PowerShell on windows-latest. Known trap: native commands print their argument
+        back on stdout even when they fail (e.g. `git rev-parse <missing-ref>` echoes the ref
+        with exit 128), so `if (native-cmd ...)` is truthy on failure. Require $LASTEXITCODE
+        checks or an explicitly query command instead. Also flag anything assuming a tool is
+        preinstalled when the workflow's own install step is conditional.
+    - path: "extension/**"
+      instructions: |
+        MV3 service worker. Check for: missing `await`, listeners registered on an async path
+        that may not have run yet, and any path that lets the browser's own save dialog win the
+        race (the whole point of this extension is to cancel chrome.downloads.onCreated before
+        the dialog appears).
+    - path: "setup.iss"
+      instructions: |
+        Inno Setup, compiled by ISCC with `/DAppVersion`. Flag: absolute machine-specific paths
+        (breaks CI), and inline PowerShell scripts longer than a line or two in [Run] entries —
+        ISCC misparses those; the repo convention is separate .ps1 files shipped alongside.
+    - path: "**/*.ps1"
+      instructions: |
+        Scripts run both locally (admin) and from the installer (SYSTEM). Flag anything that
+        assumes an interactive desktop, hardcodes a user profile path, or ignores failures.
+
+  auto_review:
+    enabled: true
+    drafts: false
+    # Only these two branches get auto-reviewed: feature -> dev, dev -> main.
+    base_branches:
+      - "^dev$"
+      - "^main$"
+
+chat:
+  auto_reply: true
