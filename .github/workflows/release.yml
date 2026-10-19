@@ -27,7 +27,11 @@ jobs:
           "version=$v" >> $env:GITHUB_OUTPUT
           $tag = "v$v"
           # Enforce "version it before promoting to main": the tag must be new.
-          if (git rev-parse "$tag" 2>$null) { throw "Tag $tag already exists — bump VERSION before pushing to main." }
+          # NB: git rev-parse echoes unknown refs back on stdout (exit 128), which
+          # PowerShell treats as truthy — `git tag --list` is the reliable check.
+          $existing = git tag --list $tag
+          if ($LASTEXITCODE -ne 0) { throw "git tag --list failed (exit $LASTEXITCODE)" }
+          if ($existing) { throw "Tag $tag already exists — bump VERSION before pushing to main." }
           Write-Host "releasing $tag"
 
       - name: Install Rust (MSVC toolchain)
